@@ -1,0 +1,7 @@
+:concurrency: 5
+:schedule:
+  generate_boletos:
+    cron: "*/10 * * * 1-5" # Executa a cada 10 minutos, de segunda a sexta-feira
+    class: "GenerateBoletosJob"
+:queues:
+  - default
