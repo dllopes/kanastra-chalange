@@ -1,16 +1,20 @@
-import { defineConfig } from 'vite'
-import path from "path"
-import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
 
-// https://vitejs.dev/config/
 export default defineConfig({
   server: {
-    port: 8888
+    port: 3001,
   },
   plugins: [react()],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      '@': path.resolve(__dirname, './src'),
     },
   },
-})
+  define: {
+    'process.env': {
+      REACT_APP_API_URL: process.env.REACT_APP_API_URL || 'http://localhost:3000',
+    },
+  },
+});

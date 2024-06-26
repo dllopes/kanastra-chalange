@@ -1,5 +1,5 @@
 // src/components/ui/file-list.tsx
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useUploadContext } from '../../context/UploadContext';
 
 const FileList = () => {
@@ -8,7 +8,15 @@ const FileList = () => {
   useEffect(() => {
     const fetchFiles = async () => {
       try {
-        const response = await fetch('http://localhost:3000/files');
+        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3000';
+        const response = await fetch(`${apiUrl}/files`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+        });
+
         if (response.ok) {
           const data = await response.json();
           dispatch({ type: 'SET_FILES', payload: data });

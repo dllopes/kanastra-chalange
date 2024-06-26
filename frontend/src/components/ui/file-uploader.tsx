@@ -22,7 +22,8 @@ const FileUploader = () => {
       formData.append('file', selectedFile);
 
       try {
-        const response = await fetch('http://localhost:3000/files', {
+        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3000';
+        const response = await fetch(`${apiUrl}/files`, {
           method: 'POST',
           body: formData,
         });

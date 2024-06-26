@@ -1,56 +1,53 @@
-import { ReactNode, createContext, useContext, useReducer } from "react";
+import { createContext, ReactNode, useContext, useReducer } from 'react';
 
-enum FileActionType { }
-
-type ReducerAction<T, P> = {
-  type: T;
-  payload?: Partial<P>;
-};
-
+// Definição dos tipos
+type FileAction =
+  | { type: 'UPLOAD_START' }
+  | { type: 'UPLOAD_SUCCESS', payload: File }
+  | { type: 'UPLOAD_ERROR' };
 
 type FileContextState = {
-  isLoading: boolean;
   file: File | null;
-  fileList: File[]; // & {} You can add more information about the challenge inside this type
+  isLoading: boolean;
 };
 
-type FileAction = ReducerAction<
-  FileActionType,
-  Partial<FileContextState>
->;
-
-type FileDispatch = ({ type, payload }: FileAction) => void;
+type FileDispatch = (action: FileAction) => void;
 
 type FileContextType = {
   state: FileContextState;
   dispatch: FileDispatch;
 };
 
-type FileProviderProps = { children: ReactNode };
+type FileProviderProps = {
+  children: ReactNode;
+};
 
-export const FileContextInitialValues: Partial<FileContextState> = {
-  file: {} as File,
+// Valores iniciais do contexto
+export const FileContextInitialValues: FileContextState = {
+  file: null,
   isLoading: false,
 };
 
-const FileContext = createContext({} as FileContextType);
+// Criação do contexto
+const FileContext = createContext<FileContextType | undefined>(undefined);
 
-const FileReducer = (
-  state: FileContextState,
-  action: FileAction,
-): FileContextState => {
+// Redutor para gerenciar as ações
+const FileReducer = (state: FileContextState, action: FileAction): FileContextState => {
   switch (action.type) {
-    default: {
-      throw new Error(`Unhandled action type: ${action.type}`);
-    }
+    case 'UPLOAD_START':
+      return { ...state, isLoading: true };
+    case 'UPLOAD_SUCCESS':
+      return { ...state, isLoading: false, file: action.payload };
+    case 'UPLOAD_ERROR':
+      return { ...state, isLoading: false };
+    default:
+      throw new Error(`Unhandled action type`);
   }
 };
 
-const FileProvider = ({ children }: FileProviderProps) => {
-  const [state, dispatch] = useReducer(
-    FileReducer,
-    FileContextInitialValues as FileContextState,
-  );
+// Provedor do contexto
+export const FileProvider = ({ children }: FileProviderProps) => {
+  const [state, dispatch] = useReducer(FileReducer, FileContextInitialValues);
 
   return (
     <FileContext.Provider value={{ state, dispatch }}>
@@ -59,12 +56,11 @@ const FileProvider = ({ children }: FileProviderProps) => {
   );
 };
 
-const useFileContext = () => {
+// Hook para usar o contexto
+export const useFileContext = () => {
   const context = useContext(FileContext);
-
-  if (context === undefined)
-    throw new Error("useFileContext must be used within a FileProvider");
-
+  if (context === undefined) {
+    throw new Error('useFileContext must be used within a FileProvider');
+  }
   return context;
 };
-

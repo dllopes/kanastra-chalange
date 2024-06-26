@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  get 'health/index'
   resources :debts
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
@@ -7,4 +8,5 @@ Rails.application.routes.draw do
   get "up" => "rails/health#show", as: :rails_health_check
 
   resources :files, only: [:index, :create]
+  get '/health', to: 'health#index'
 end

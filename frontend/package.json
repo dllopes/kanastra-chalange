@@ -4,10 +4,10 @@
   "version": "1.0.0",
   "proxy": "http://localhost:3000",
   "scripts": {
-    "dev": "concurrently --kill-others \"bun run tailwindcss --watch\" \"vite\"",
+    "dev": "concurrently --kill-others \"npx tailwindcss --watch\" \"vite --host\"",
     "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "tailwindcss": "tailwindcss -i ./src/global.css -o ./dist/index.css",
-    "build": "tsc && vite build && bun run tailwindcss",
+    "build": "tsc && vite build && npx tailwindcss",
     "preview": "vite preview",
     "dev:node": "concurrently \"npx tailwindcss -i ./src/global.css -o ./dist/index.css --watch\" \"vite\"",
     "build:node": "tsc && vite build && npm run tailwindcss"
