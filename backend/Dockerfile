@@ -1,28 +1,37 @@
 # syntax = docker/dockerfile:1
 
-# Certifique-se de que RUBY_VERSION corresponde à versão do Ruby no .ruby-version e Gemfile
 ARG RUBY_VERSION=3.1.4
-FROM registry.docker.com/library/ruby:$RUBY_VERSION-slim as base
+FROM ruby:$RUBY_VERSION-slim as base
 
-# O app Rails vive aqui
 WORKDIR /rails
 
-# Defina o ambiente de produção
-ENV RAILS_ENV="production" \
-    BUNDLE_DEPLOYMENT="1" \
-    BUNDLE_PATH="/usr/local/bundle" \
-    BUNDLE_WITHOUT="development"
+# Defina o ambiente de desenvolvimento
+ENV RAILS_ENV="development" \
+    BUNDLE_PATH="/usr/local/bundle"
 
-# Estágio de construção para reduzir o tamanho da imagem final
-FROM base as build
-
-# Instalar pacotes necessários para construir gems
+# Instalar pacotes necessários para construir gems e dependências do Ruby
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y build-essential git libvips pkg-config libpq-dev
+    apt-get install --no-install-recommends -y \
+    build-essential \
+    git \
+    libvips \
+    pkg-config \
+    libpq-dev \
+    libssl-dev \
+    libreadline-dev \
+    zlib1g-dev \
+    ruby-dev \
+    wget
+
+# Instalar o código-fonte do Ruby para acessar os cabeçalhos necessários
+RUN wget https://cache.ruby-lang.org/pub/ruby/3.1/ruby-3.1.4.tar.gz && \
+    tar -xzf ruby-3.1.4.tar.gz && \
+    cp -r ruby-3.1.4/include/* /usr/local/include/
 
 # Instalar gems da aplicação
 COPY Gemfile Gemfile.lock ./
 RUN gem install bundler -v 2.5.14 && \
+    bundle config build.debase --with-ruby-include=/usr/local/include/ruby-3.1.0 && \
     bundle install && \
     rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \
     bundle exec bootsnap precompile --gemfile
@@ -38,21 +47,23 @@ FROM base
 
 # Instalar pacotes necessários para o deployment
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y curl libsqlite3-0 libvips postgresql-client libpq-dev && \
+    apt-get install --no-install-recommends -y \
+    curl \
+    libsqlite3-0 \
+    libvips \
+    postgresql-client \
+    libpq-dev && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Copiar artefatos construídos: gems, aplicação
-COPY --from=build /usr/local/bundle /usr/local/bundle
-COPY --from=build /rails /rails
+COPY --from=base /usr/local/bundle /usr/local/bundle
+COPY --from=base /rails /rails
 
-# Executar e possuir apenas os arquivos de runtime como um usuário não root por segurança
 RUN useradd rails --create-home --shell /bin/bash && \
     chown -R rails:rails db log storage tmp
 USER rails:rails
 
-# Entrypoint prepara o banco de dados.
 ENTRYPOINT ["/rails/bin/docker-entrypoint"]
 
-# Iniciar o servidor por padrão, isso pode ser sobrescrito em runtime
-EXPOSE 3000
+EXPOSE 3000 1234
 CMD ["./bin/rails", "server"]

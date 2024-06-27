@@ -14,15 +14,17 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    command: bash -c "rm -f tmp/pids/server.pid && ./bin/rails server -b '0.0.0.0'"
+    command: bash -c "rm -f tmp/pids/server.pid && rdebug-ide --host 0.0.0.0 --port 1234 -- bin/rails server -b '0.0.0.0'"
     volumes:
       - ./backend:/rails
     ports:
       - "3000:3000"
+      - "1234:1234"
     depends_on:
       - db
     environment:
       DATABASE_URL: postgres://postgres:password@db:5432/myapp_development
+      RAILS_ENV: development
 
   frontend:
     build:
@@ -30,6 +32,7 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./frontend:/usr/src/app
+      - /usr/src/app/node_modules
     ports:
       - "3001:3001"
     stdin_open: true
